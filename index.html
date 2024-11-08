@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLE Scan and Connect</title>
+    <title>BLE and Connect</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -35,8 +35,8 @@
         let txCharacteristic;
 
         // UUIDs for the RX and TX characteristics (replace these with the actual UUIDs of your device)
-        const RX_UUID = 'your-rx-uuid';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
-        const TX_UUID = 'your-tx-uuid';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
+        const RX_UUID = 'f000c0c2-0451-4000-6000-000000000000';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
+        const TX_UUID = 'f000c0c1-0451-4000-6000-000000000000';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
 
         // Function to start scanning for all BLE devices
         async function scanAndConnect() {
@@ -56,7 +56,7 @@
                 currentServer = await device.gatt.connect();
 
                 // Once connected, discover services and characteristics
-                const service = await currentServer.getPrimaryService('your-service-uuid');  // Replace with actual service UUID
+                const service = await currentServer.getPrimaryService('f000c0c0-0451-4000-6000-000000000000');  // Replace with actual service UUID
 
                 // Get the TX (write) and RX (read) characteristics
                 txCharacteristic = await service.getCharacteristic(TX_UUID);
