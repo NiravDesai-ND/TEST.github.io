@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLE Scan and Connect</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>BLE Scan and Connect</h1>
+    <button id="scanBtn">Scan for BLE Devices</button>
+    <div id="status">Status: Not connected</div>
+
+    <script>
+        const scanButton = document.getElementById("scanBtn");
+        const statusDiv = document.getElementById("status");
+
+        // Function to start scanning for all BLE devices
+        async function scanAndConnect() {
+            try {
+                // Request any BLE device (no specific service filter)
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true  // Accept any BLE device
+                });
+
+                // Update status
+                statusDiv.textContent = `Found device: ${device.name || 'Unnamed device'}`;
+
+                // Establish a connection to the GATT server
+                const server = await device.gatt.connect();
+
+                // Once connected, we can interact with the device's services and characteristics
+                statusDiv.textContent = `Connected to ${device.name || 'Unnamed device'}`;
+
+                // Optionally, you can discover services, characteristics, etc. here
+                // Example: Read the device's battery level or other characteristics
+
+            } catch (error) {
+                console.error("Connection failed", error);
+                statusDiv.textContent = `Connection failed: ${error}`;
+            }
+        }
+
+        // Attach event listener to scan button
+        scanButton.addEventListener("click", () => {
+            statusDiv.textContent = "Scanning for devices...";
+            scanAndConnect();
+        });
+    </script>
+</body>
+</html>
