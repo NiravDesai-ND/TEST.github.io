@@ -18,28 +18,46 @@
         #readButton {
             margin-top: 10px;
         }
+        #inputField {
+            margin-top: 10px;
+        }
+        #receivedData {
+            margin-top: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>1 BLE Read and Write Example</h1>
+    <h1>BLE Read and Write Example</h1>
     <button id="scanBtn">Scan for BLE Devices</button>
     <div id="status">Status: Not connected</div>
 
-    <button id="sendButton" style="display:none;">Send Data</button>
-    <button id="readButton" style="display:none;">Read Data</button>
+    <div id="inputField" style="display:none;">
+        <label for="dataToSend">Enter Data to Send:</label>
+        <input type="text" id="dataToSend" placeholder="Enter text to send" />
+        <button id="sendButton">Send Data</button>
+    </div>
+
+    <div id="receivedData" style="display:none;">
+        <p><strong>Received Data:</strong> <span id="dataDisplay">None</span></p>
+    </div>
 
     <script>
         const scanButton = document.getElementById("scanBtn");
         const statusDiv = document.getElementById("status");
         const sendButton = document.getElementById("sendButton");
-        const readButton = document.getElementById("readButton");
+        const inputField = document.getElementById("inputField");
+        const receivedDataDiv = document.getElementById("receivedData");
+        const dataDisplay = document.getElementById("dataDisplay");
+        const dataToSendInput = document.getElementById("dataToSend");
 
         let currentDevice;
         let currentServer;
         let readCharacteristic;
         let writeCharacteristic;
 
-        // UUID for the service and characteristics
+        // UUIDs for the service and characteristics
         const SERVICE_UUID = 'f000c0c0-0451-4000-6000-000000000000';
         const READ_CHARACTERISTIC_UUID = 'f000c0c1-0451-4000-6000-000000000000';
         const WRITE_CHARACTERISTIC_UUID = 'f000c0c2-0451-4000-6000-000000000000';
@@ -69,9 +87,15 @@
                 // Update status
                 statusDiv.textContent = `Connected to ${device.name || 'Unnamed device'}`;
 
-                // Show the buttons to interact with the device
-                sendButton.style.display = 'inline-block';
-                readButton.style.display = 'inline-block';
+                // Show the input field and buttons
+                inputField.style.display = 'block';
+                receivedDataDiv.style.display = 'block';
+
+                // Listen for changes in the read characteristic (data received)
+                if (readCharacteristic.startNotifications) {
+                    await readCharacteristic.startNotifications();
+                    readCharacteristic.addEventListener('characteristicvaluechanged', handleReceivedData);
+                }
 
             } catch (error) {
                 console.error("Error during connection", error);
@@ -79,26 +103,25 @@
             }
         }
 
-        // Function to read data from the read characteristic
-        async function readData() {
-            try {
-                // Read the value of the read characteristic
-                const value = await readCharacteristic.readValue();
-                const decoder = new TextDecoder();
-                const text = decoder.decode(value);
+        // Function to handle received data from the read characteristic
+        function handleReceivedData(event) {
+            const value = event.target.value;
+            const decoder = new TextDecoder();
+            const text = decoder.decode(value);
 
-                console.log('Received data:', text);
-                statusDiv.textContent = `Read data: ${text}`;
-            } catch (error) {
-                console.error("Failed to read data", error);
-                statusDiv.textContent = `Failed to read data: ${error.message || error}`;
-            }
+            console.log('Received data:', text);
+            dataDisplay.textContent = text; // Update the screen with the received data
         }
 
         // Function to send data to the write characteristic
         async function sendData() {
             try {
-                const dataToSend = "Hello from Web Bluetooth!"; // Example data to send
+                const dataToSend = dataToSendInput.value.trim(); // Get the text entered by the user
+                if (dataToSend === "") {
+                    alert("Please enter some text to send!");
+                    return;
+                }
+
                 const encoder = new TextEncoder();
                 const data = encoder.encode(dataToSend);
 
@@ -107,6 +130,10 @@
 
                 console.log('Data sent:', dataToSend);
                 statusDiv.textContent = `Sent data: ${dataToSend}`;
+
+                // Clear the input field after sending the data
+                dataToSendInput.value = "";
+
             } catch (error) {
                 console.error("Failed to send data", error);
                 statusDiv.textContent = `Failed to send data: ${error.message || error}`;
@@ -118,9 +145,6 @@
             statusDiv.textContent = "Scanning for devices...";
             scanAndConnect();
         });
-
-        // Attach event listener to read data button
-        readButton.addEventListener("click", readData);
 
         // Attach event listener to send data button
         sendButton.addEventListener("click", sendData);
