@@ -18,7 +18,7 @@
     </style>
 </head>
 <body>
-    <h1>BLE Scan and Connect</h1>
+    <h1>BLE Scan  Connect</h1>
     <button id="scanBtn">Scan for BLE Devices</button>
     <div id="status">Status: Not connected</div>
 
@@ -35,8 +35,8 @@
         let txCharacteristic;
 
         // UUIDs for the RX and TX characteristics (replace these with the actual UUIDs of your device)
-        const RX_UUID = 'f000c0c2-0451-4000-6000-000000000000';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
-        const TX_UUID = 'f000c0c1-0451-4000-6000-000000000000';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
+        const RX_UUID = 'f000c0c1-0451-4000-6000-000000000000';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
+        const TX_UUID = 'f000c0c2-0451-4000-6000-000000000000';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
 
         // Function to start scanning for all BLE devices
         async function scanAndConnect() {
