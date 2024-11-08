@@ -12,10 +12,7 @@
             margin-top: 20px;
             font-weight: bold;
         }
-        #sendButton {
-            margin-top: 10px;
-        }
-        #readButton {
+        button {
             margin-top: 10px;
         }
         #inputField {
@@ -26,22 +23,24 @@
             font-weight: bold;
             margin-bottom: 20px;
         }
-        #connectButton, #disconnectButton {
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
-    <h1>1 BLE Read and Write Example</h1>
+    <h1>ELECTRIFY ENERGY  PRIVATE LIMITED </h1>
     <button id="scanBtn">Scan for BLE Devices</button>
     <div id="status">Status: Not connected</div>
 
     <div id="inputField" style="display:none;">
-        <label for="dataToSend">Enter Data to Send:</label>
-        <input type="text" id="dataToSend" placeholder="Enter text to send" />
-        <button id="sendButton">Send Data</button>
-        <button id="connectButton">Connect</button>
-        <button id="disconnectButton">Disconnect</button>
+        <button id="serialNumberBtn">Serial Number</button>
+        <button id="pcbNumberBtn">Read PCB Number</button>
+        <button id="memoryEraseBtn">Memory Erase</button>
+        <button id="meterRtcBtn">Meter RTC</button>
+        <button id="relayConnectBtn">Relay Connect</button>
+        <button id="relayDisconnectBtn">Relay Disconnect</button>
+        <button id="instantaneousDataBtn">Instantaneous Data</button>
+        <button id="firmwareVersionBtn">Firmware Version</button>
+        <button id="simIccidBtn">SIM ICCID</button>
+        <button id="simImeiBtn">SIM IMEI</button>
     </div>
 
     <div id="receivedData" style="display:none;">
@@ -51,13 +50,20 @@
     <script>
         const scanButton = document.getElementById("scanBtn");
         const statusDiv = document.getElementById("status");
-        const sendButton = document.getElementById("sendButton");
-        const connectButton = document.getElementById("connectButton");
-        const disconnectButton = document.getElementById("disconnectButton");
         const inputField = document.getElementById("inputField");
         const receivedDataDiv = document.getElementById("receivedData");
         const dataDisplay = document.getElementById("dataDisplay");
-        const dataToSendInput = document.getElementById("dataToSend");
+
+        const serialNumberBtn = document.getElementById("serialNumberBtn");
+        const pcbNumberBtn = document.getElementById("pcbNumberBtn");
+        const memoryEraseBtn = document.getElementById("memoryEraseBtn");
+        const meterRtcBtn = document.getElementById("meterRtcBtn");
+        const relayConnectBtn = document.getElementById("relayConnectBtn");
+        const relayDisconnectBtn = document.getElementById("relayDisconnectBtn");
+        const instantaneousDataBtn = document.getElementById("instantaneousDataBtn");
+        const firmwareVersionBtn = document.getElementById("firmwareVersionBtn");
+        const simIccidBtn = document.getElementById("simIccidBtn");
+        const simImeiBtn = document.getElementById("simImeiBtn");
 
         let currentDevice;
         let currentServer;
@@ -66,13 +72,12 @@
 
         // UUIDs for the service and characteristics
         const SERVICE_UUID = 'f000c0c0-0451-4000-b000-000000000000';
-        const READ_CHARACTERISTIC_UUID = 'f000c0c2-0451-4000-b000-000000000000';
-        const WRITE_CHARACTERISTIC_UUID = 'f000c0c1-0451-4000-b000-000000000000';
+        const READ_CHARACTERISTIC_UUID = 'f000c0c1-0451-4000-b000-000000000000';
+        const WRITE_CHARACTERISTIC_UUID = 'f000c0c2-0451-4000-b000-000000000000';
 
         // Function to start scanning for BLE devices
         async function scanAndConnect() {
             try {
-                // Request the BLE device with the specific service UUID
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true, // Accept any BLE device
                     optionalServices: [SERVICE_UUID]  // Request the service UUID
@@ -94,7 +99,7 @@
                 // Update status
                 statusDiv.textContent = `Connected to ${device.name || 'Unnamed device'}`;
 
-                // Show the input field and buttons
+                // Show the buttons
                 inputField.style.display = 'block';
                 receivedDataDiv.style.display = 'block';
 
@@ -120,61 +125,36 @@
             dataDisplay.textContent = text; // Update the screen with the received data
         }
 
-        // Function to send data to the write characteristic
-        async function sendData() {
+        // Function to send a command to the BLE device
+        async function sendCommand(command) {
             try {
-                const dataToSend = dataToSendInput.value.trim(); // Get the text entered by the user
-                if (dataToSend === "") {
-                    alert("Please enter some text to send!");
-                    return;
-                }
-
-                const encoder = new TextEncoder();
-                const data = encoder.encode(dataToSend);
-
-                // Write data to the write characteristic
-                await writeCharacteristic.writeValue(data);
-
-                console.log('Data sent:', dataToSend);
-                statusDiv.textContent = `Sent data: ${dataToSend}`;
-
-                // Clear the input field after sending the data
-                dataToSendInput.value = "";
-
+                const commandData = new Uint8Array(command);
+                await writeCharacteristic.writeValue(commandData);
+                console.log('Command sent:', command);
+                statusDiv.textContent = `Sent command: ${command}`;
             } catch (error) {
-                console.error("Failed to send data", error);
-                statusDiv.textContent = `Failed to send data: ${error.message || error}`;
+                console.error("Failed to send command", error);
+                statusDiv.textContent = `Failed to send command: ${error.message || error}`;
             }
         }
 
-        // Function to send the connect command (hex values)
-        async function sendConnectCommand() {
-            const connectData = new Uint8Array([0x24, 0x45, 0x45, 0x50, 0x6D, 0x72, 0x65, 0x6C, 0x61, 0x79, 0x6F, 0x6E, 0x23, 0x0D, 0x0D]);
-            await writeCharacteristic.writeValue(connectData);
-            statusDiv.textContent = "Sent connect command";
-        }
-
-        // Function to send the disconnect command (hex values)
-        async function sendDisconnectCommand() {
-            const disconnectData = new Uint8Array([0x24, 0x45, 0x45, 0x50, 0x6D, 0x72, 0x65, 0x6C, 0x61, 0x79, 0x6F, 0x66, 0x66, 0x23, 0x0D]);
-            await writeCharacteristic.writeValue(disconnectData);
-            statusDiv.textContent = "Sent disconnect command";
-        }
+        // Button event listeners for all commands
+        serialNumberBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x67, 0x73, 0x72, 0x23, 0x0D]));
+        pcbNumberBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x67, 0x70, 0x63, 0x62, 0x23, 0x0D]));
+        memoryEraseBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x6D, 0x65, 0x72, 0x23, 0x0D]));
+        meterRtcBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x67, 0x72, 0x74, 0x63, 0x23, 0x0D]));
+        relayConnectBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x6D, 0x72, 0x65, 0x6C, 0x61, 0x79, 0x6F, 0x6E, 0x23, 0x0D]));
+        relayDisconnectBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x6D, 0x72, 0x65, 0x6C, 0x61, 0x79, 0x6F, 0x66, 0x66, 0x23, 0x0D]));
+        instantaneousDataBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x67, 0x69, 0x6E, 0x73, 0x74, 0x23, 0x0D, 0x0A]));
+        firmwareVersionBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x4D, 0x46, 0x57, 0x56, 0x65, 0x72, 0x23, 0x23, 0x0D, 0x0A]));
+        simIccidBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x52, 0x44, 0x49, 0x43, 0x43, 0x49, 0x44, 0x23, 0x0D, 0x0A]));
+        simImeiBtn.addEventListener("click", () => sendCommand([0x24, 0x45, 0x45, 0x50, 0x52, 0x44, 0x49, 0x4D, 0x45, 0x49, 0x23, 0x0D, 0x0A]));
 
         // Attach event listener to scan button
         scanButton.addEventListener("click", () => {
             statusDiv.textContent = "Scanning for devices...";
             scanAndConnect();
         });
-
-        // Attach event listener to send data button
-        sendButton.addEventListener("click", sendData);
-
-        // Attach event listener to connect button
-        connectButton.addEventListener("click", sendConnectCommand);
-
-        // Attach event listener to disconnect button
-        disconnectButton.addEventListener("click", sendDisconnectCommand);
     </script>
 </body>
 </html>
