@@ -26,10 +26,13 @@
             font-weight: bold;
             margin-bottom: 20px;
         }
+        #connectButton, #disconnectButton {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>BLE Read and Write Example</h1>
+    <h1>1 BLE Read and Write Example</h1>
     <button id="scanBtn">Scan for BLE Devices</button>
     <div id="status">Status: Not connected</div>
 
@@ -37,6 +40,8 @@
         <label for="dataToSend">Enter Data to Send:</label>
         <input type="text" id="dataToSend" placeholder="Enter text to send" />
         <button id="sendButton">Send Data</button>
+        <button id="connectButton">Connect</button>
+        <button id="disconnectButton">Disconnect</button>
     </div>
 
     <div id="receivedData" style="display:none;">
@@ -47,6 +52,8 @@
         const scanButton = document.getElementById("scanBtn");
         const statusDiv = document.getElementById("status");
         const sendButton = document.getElementById("sendButton");
+        const connectButton = document.getElementById("connectButton");
+        const disconnectButton = document.getElementById("disconnectButton");
         const inputField = document.getElementById("inputField");
         const receivedDataDiv = document.getElementById("receivedData");
         const dataDisplay = document.getElementById("dataDisplay");
@@ -59,8 +66,8 @@
 
         // UUIDs for the service and characteristics
         const SERVICE_UUID = 'f000c0c0-0451-4000-b000-000000000000';
-        const READ_CHARACTERISTIC_UUID = 'f000c0c1-0451-4000-b000-000000000000';
-        const WRITE_CHARACTERISTIC_UUID = 'f000c0c2-0451-4000-b000-000000000000';
+        const READ_CHARACTERISTIC_UUID = 'f000c0c2-0451-4000-b000-000000000000';
+        const WRITE_CHARACTERISTIC_UUID = 'f000c0c1-0451-4000-b000-000000000000';
 
         // Function to start scanning for BLE devices
         async function scanAndConnect() {
@@ -140,6 +147,20 @@
             }
         }
 
+        // Function to send the connect command (hex values)
+        async function sendConnectCommand() {
+            const connectData = new Uint8Array([0x24, 0x45, 0x45, 0x50, 0x6D, 0x72, 0x65, 0x6C, 0x61, 0x79, 0x6F, 0x6E, 0x23, 0x0D, 0x0D]);
+            await writeCharacteristic.writeValue(connectData);
+            statusDiv.textContent = "Sent connect command";
+        }
+
+        // Function to send the disconnect command (hex values)
+        async function sendDisconnectCommand() {
+            const disconnectData = new Uint8Array([0x24, 0x45, 0x45, 0x50, 0x6D, 0x72, 0x65, 0x6C, 0x61, 0x79, 0x6F, 0x66, 0x66, 0x23, 0x0D]);
+            await writeCharacteristic.writeValue(disconnectData);
+            statusDiv.textContent = "Sent disconnect command";
+        }
+
         // Attach event listener to scan button
         scanButton.addEventListener("click", () => {
             statusDiv.textContent = "Scanning for devices...";
@@ -148,6 +169,12 @@
 
         // Attach event listener to send data button
         sendButton.addEventListener("click", sendData);
+
+        // Attach event listener to connect button
+        connectButton.addEventListener("click", sendConnectCommand);
+
+        // Attach event listener to disconnect button
+        disconnectButton.addEventListener("click", sendDisconnectCommand);
     </script>
 </body>
 </html>
