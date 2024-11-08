@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BLE Scan and Connect</title>
+    <title>BLE Read and Write Example</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,37 +15,42 @@
         #sendButton {
             margin-top: 10px;
         }
+        #readButton {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>BLE Scan and Connect</h1>
+    <h1>1 BLE Read and Write Example</h1>
     <button id="scanBtn">Scan for BLE Devices</button>
     <div id="status">Status: Not connected</div>
 
     <button id="sendButton" style="display:none;">Send Data</button>
+    <button id="readButton" style="display:none;">Read Data</button>
 
     <script>
         const scanButton = document.getElementById("scanBtn");
         const statusDiv = document.getElementById("status");
         const sendButton = document.getElementById("sendButton");
+        const readButton = document.getElementById("readButton");
 
         let currentDevice;
         let currentServer;
-        let rxCharacteristic;
-        let txCharacteristic;
+        let readCharacteristic;
+        let writeCharacteristic;
 
-        // Replace with your actual RX and TX UUIDs
-        const RX_UUID = 'f000c0c1-0451-4000-6000-000000000000';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
-        const TX_UUID = 'f000c0c2-0451-4000-6000-000000000000';  // Example: '00002a19-0000-1000-8000-00805f9b34fb'
-        const SERVICE_UUID = 'f000c0c0-0451-4000-6000-000000000000';  // Replace with the service UUID of your BLE device
+        // UUID for the service and characteristics
+        const SERVICE_UUID = 'f000c0c0-0451-4000-6000-000000000000';
+        const READ_CHARACTERISTIC_UUID = 'f000c0c1-0451-4000-6000-000000000000';
+        const WRITE_CHARACTERISTIC_UUID = 'f000c0c2-0451-4000-6000-000000000000';
 
-        // Function to start scanning for all BLE devices
+        // Function to start scanning for BLE devices
         async function scanAndConnect() {
             try {
-                // Request any BLE device (no specific service filter)
+                // Request the BLE device with the specific service UUID
                 const device = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true, // Accept any BLE device
-                    optionalServices: [SERVICE_UUID]  // Only request services that the device exposes
+                    optionalServices: [SERVICE_UUID]  // Request the service UUID
                 });
 
                 currentDevice = device;
@@ -56,47 +61,49 @@
                 // Establish a connection to the GATT server
                 currentServer = await device.gatt.connect();
 
-                // Once connected, discover services and characteristics
+                // Discover the service and get the read and write characteristics
                 const service = await currentServer.getPrimaryService(SERVICE_UUID);
-
-                // Get the TX (write) and RX (read) characteristics
-                txCharacteristic = await service.getCharacteristic(TX_UUID);
-                rxCharacteristic = await service.getCharacteristic(RX_UUID);
-
-                // Listen for changes on the RX characteristic (if it supports notifications)
-                if (rxCharacteristic.startNotifications) {
-                    await rxCharacteristic.startNotifications();
-                    rxCharacteristic.addEventListener('characteristicvaluechanged', handleReceivedData);
-                }
+                readCharacteristic = await service.getCharacteristic(READ_CHARACTERISTIC_UUID);
+                writeCharacteristic = await service.getCharacteristic(WRITE_CHARACTERISTIC_UUID);
 
                 // Update status
                 statusDiv.textContent = `Connected to ${device.name || 'Unnamed device'}`;
-                sendButton.style.display = 'inline-block'; // Show the Send button after connection
+
+                // Show the buttons to interact with the device
+                sendButton.style.display = 'inline-block';
+                readButton.style.display = 'inline-block';
 
             } catch (error) {
-                console.error("Error in connection process:", error);
+                console.error("Error during connection", error);
                 statusDiv.textContent = `Connection failed: ${error.message || error}`;
             }
         }
 
-        // Function to handle received data from RX characteristic
-        function handleReceivedData(event) {
-            const value = event.target.value;
-            const decoder = new TextDecoder();
-            const text = decoder.decode(value);
-            console.log('Received data:', text);
-            statusDiv.textContent = `Received: ${text}`;
+        // Function to read data from the read characteristic
+        async function readData() {
+            try {
+                // Read the value of the read characteristic
+                const value = await readCharacteristic.readValue();
+                const decoder = new TextDecoder();
+                const text = decoder.decode(value);
+
+                console.log('Received data:', text);
+                statusDiv.textContent = `Read data: ${text}`;
+            } catch (error) {
+                console.error("Failed to read data", error);
+                statusDiv.textContent = `Failed to read data: ${error.message || error}`;
+            }
         }
 
-        // Function to send data via the TX characteristic
+        // Function to send data to the write characteristic
         async function sendData() {
             try {
-                const dataToSend = "24 45 45 50 6D 65 72 23 0D"; // Data to send
+                const dataToSend = "Hello from Web Bluetooth!"; // Example data to send
                 const encoder = new TextEncoder();
                 const data = encoder.encode(dataToSend);
 
-                // Write to TX characteristic
-                await txCharacteristic.writeValue(data);
+                // Write data to the write characteristic
+                await writeCharacteristic.writeValue(data);
 
                 console.log('Data sent:', dataToSend);
                 statusDiv.textContent = `Sent data: ${dataToSend}`;
@@ -111,6 +118,9 @@
             statusDiv.textContent = "Scanning for devices...";
             scanAndConnect();
         });
+
+        // Attach event listener to read data button
+        readButton.addEventListener("click", readData);
 
         // Attach event listener to send data button
         sendButton.addEventListener("click", sendData);
